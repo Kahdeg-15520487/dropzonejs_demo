@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/basic.min.css" />
+
+    <script type="application/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.4.0/min/dropzone.min.js">
+        </script>
+
+    <title>pydrop</title>
+    <style>
+        .dz-progress {
+            /* progress bar covers file name */
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div id="content">
+        <form method="POST" action='/upload' class="dropzone dz-clickable" id="dropper" enctype="multipart/form-data">
+        </form>
+        <br />
+        <div>
+            <progress id="percentageBar" value="0" max="100"> 0% </progress>
+            <label id="percentage"></label><br />
+            <label id="bytesents"></label><br />
+            <label id="speed"></label><br />
+            <label id="elapsed"></label>
+        </div>
+
+        <script type="application/javascript">
+            var startTime;
+            var endTime;
+            var lastSpeed = 0;
+            var totalSize = 0;
+            var bytesents = 0;
+
+            var percentageLabel = document.getElementById("percentage");
+            var percentageBarLabel = document.getElementById("percentageBar");
+            var byteSentsLabel = document.getElementById("bytesents");
+            var speedLabel = document.getElementById("speed");
+            var elapsedLabel = document.getElementById("elapsed");
+
+            Dropzone.options.dropper = {
+                paramName: 'file',
+                chunking: true,
+                forceChunking: true,
+                url: 'http://kahdeg.ddns.net:8000/api/mediafiles/upload',
+                maxFilesize: 10000, // megabytes
+                chunkSize: 3900000, // bytes
+                headers: {
+                    'Cache-Control': null,
+                },
+                init: function () {
+                    this.on("addedfile", function (f) {
+                        startTime = Date.now();
+                        console.log("start" + f.size);
+                        totalSize = f.size;
+                    });
+                    this.on("complete", function (f) {
+                        endTime = Date.now();
+                        percentageLabel.innerText = 100 + " %";
+                        percentageBarLabel.value = 100;
+                    });
+                    this.on("uploadprogress", function (f, progress, bytesSent) {
+                        console.log(bytesSent)
+                        percentageLabel.innerText = (bytesSent / totalSize * 100).toFixed(0) + " %";
+                        percentageBarLabel.value = (bytesSent / totalSize * 100);
+                        byteSentsLabel.innerText = bytesSent + " bytes";
+                        let elapsed = (Date.now() - startTime) / 1000;
+                        elapsedLabel.innerText = elapsed.toFixed(0) + " s";
+                        let speed = bytesSent / elapsed / 1024;
+                        if (lastSpeed == 0) {
+                            lastSpeed = speed;
+                        }
+                        speed = (speed + lastSpeed) / 2;
+                        lastSpeed = speed;
+                        speedLabel.innerText = speed.toFixed(0) + " kilobyte/second"
+                    });
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>
